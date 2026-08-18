@@ -7,7 +7,10 @@ inputs:
     required: false
     default: '.'
   since-commit:
-    description: 'Commit SHA to scan from, exclusive. Pass ${{ github.event.before }} from the calling workflow.'
+    description: 'Commit SHA to scan from, exclusive. Pass the previous commit SHA from the calling workflow (github.event.before for push events).'
+    required: true
+  branch:
+    description: 'Branch to scan. Pass the ref name from the calling workflow (github.ref_name).'
     required: true
 
 runs:
@@ -17,5 +20,5 @@ runs:
     - git
     - 'file://${{ inputs.path }}'
     - '--since-commit=${{ inputs.since-commit }}'
-    - '--branch=${{ env.GITHUB_REF_NAME }}'
+    - '--branch=${{ inputs.branch }}'
     - '--fail'

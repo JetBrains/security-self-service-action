@@ -8,3 +8,4 @@ jobs:
       - uses: ./
         with:
           since-commit: ${{ github.event.before }}
+          branch: ${{ github.ref_name }}
