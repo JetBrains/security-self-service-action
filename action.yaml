@@ -11,6 +11,8 @@ runs:
   using: 'docker'
   image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog:3.94.3'
   args:
-    - filesystem
+    - git
+    - 'file://${{ inputs.path }}'
+    - '--since-commit=${{ github.event.before }}'
+    - '--branch=${{ github.ref_name }}'
     - '--fail'
-    - '${{ inputs.path }}'
