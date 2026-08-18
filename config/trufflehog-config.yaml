@@ -1,0 +1,39 @@
+# Custom TruffleHog detectors.
+# https://github.com/trufflesecurity/trufflehog#regex-detector-alpha
+detectors:
+  - name: GENERIC_JWT
+    description: Detection JWT tokens and validation through our services
+    keywords:
+      - eyJ
+    regex:
+      token: '\b(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)\b'
+    verify:
+      - endpoint: https://secrets-verifier.labs.jb.gg/api/validator
+
+  - name: HUB_PERMANENT_TOKEN
+    description: Detection YouTrack and Hub tokens in perm format
+    keywords:
+      - perm-
+      - 'perm:'
+    regex:
+      token: '\b(perm-[A-Za-z0-9_-]{32,}|perm[:-](?:(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2,4})\.){2}(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2,4}))(?:[^A-Za-z0-9_+/=.:-]|$)'
+    verify:
+      - endpoint: https://secrets-verifier.labs.jb.gg/api/validator
+
+  - name: TEAMCITY_TOKEN
+    description: Detection TeamCity tokens
+    keywords:
+      - eyJ0eXAiOiAiVENWMiJ9
+    regex:
+      token: '\b(eyJ0eXAiOiAiVENWMiJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)\b'
+    verify:
+      - endpoint: https://secrets-verifier.labs.jb.gg/api/validator
+
+  - name: LITE_LLM_TOKEN
+    description: Detection Lite LLM tokens
+    keywords:
+      - sk-
+    regex:
+      token: '\b(sk-[A-Za-z0-9_-]+)\b'
+    verify:
+      - endpoint: https://secrets-verifier.labs.jb.gg/api/validator

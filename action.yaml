@@ -1,0 +1,16 @@
+name: 'Security Self-Service Secret Scan'
+description: 'Scans a repository for secrets using TruffleHog with a custom detector config.'
+
+inputs:
+  path:
+    description: 'Path to scan, relative to the checked-out repository.'
+    required: false
+    default: '.'
+
+runs:
+  using: 'docker'
+  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog:3.94.3'
+  args:
+    - filesystem
+    - '--fail'
+    - '${{ inputs.path }}'
