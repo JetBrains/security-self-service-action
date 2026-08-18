@@ -6,6 +6,9 @@ inputs:
     description: 'Path to scan, relative to the checked-out repository.'
     required: false
     default: '.'
+  since-commit:
+    description: 'Commit SHA to scan from, exclusive. Pass ${{ github.event.before }} from the calling workflow.'
+    required: true
 
 runs:
   using: 'docker'
@@ -13,6 +16,6 @@ runs:
   args:
     - git
     - 'file://${{ inputs.path }}'
-    - '--since-commit=${{ github.event.before }}'
-    - '--branch=${{ github.ref_name }}'
+    - '--since-commit=${{ inputs.since-commit }}'
+    - '--branch=${{ env.GITHUB_REF_NAME }}'
     - '--fail'
