@@ -14,11 +14,31 @@ inputs:
     required: true
 
 runs:
-  using: 'docker'
-  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:72bba71ba5e0f2990b2074bb049f4f3a1ae1a77c7386cd535165b780d2a94761'
-  args:
-    - git
-    - 'file://${{ inputs.path }}'
-    - '--since-commit=${{ inputs.since-commit }}'
-    - '--branch=${{ inputs.branch }}'
-    - '--fail'
+  using: 'composite'
+  steps:
+    - name: Run TruffleHog scan
+      shell: bash
+      run: |
+        set -o pipefail
+
+        LOG_FILE="$RUNNER_TEMP/trufflehog-scan-output.log"
+
+        docker run --rm \
+          -v "${{ github.workspace }}:/repo" \
+          -v "${{ github.action_path }}/config/trufflehog-config.yaml:/config.yaml:ro" \
+          -w /repo \
+          registry.jetbrains.team/p/sad/tools/trufflehog@sha256:72bba71ba5e0f2990b2074bb049f4f3a1ae1a77c7386cd535165b780d2a94761 \
+          git 'file://${{ inputs.path }}' \
+          --since-commit='${{ inputs.since-commit }}' \
+          --branch='${{ inputs.branch }}' \
+          --fail \
+          --config=/config.yaml \
+          2>&1 | tee "$LOG_FILE"
+        SCAN_EXIT=${PIPESTATUS[0]}
+
+        if grep -q "Healthcheck failed" "$LOG_FILE"; then
+          echo "::error::Secrets verifier (secrets-verifier.labs.jb.gg) is unreachable — the scan did not run reliably. Failing the job."
+          exit 1
+        fi
+
+        exit "$SCAN_EXIT"
