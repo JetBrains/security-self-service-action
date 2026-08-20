@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: JetBrains/security-self-service-action
-          ref: v2
+          ref: v3
           path: .security-action
           token: ${{ secrets.ACTION_REPO_PAT }}
 
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: JetBrains/security-self-service-action
-          ref: v2
+          ref: v3
           path: .security-action
           token: ${{ secrets.ACTION_REPO_PAT }}
 

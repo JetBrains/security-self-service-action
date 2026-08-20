@@ -19,7 +19,9 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:65a5ee7ac59b29075c7223f3c419e8ce04ba85737c255583d2a1c108e97f1ee7'
+  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:6112d8e49e53ebc950f17f29f8581262632788b30c3df9606a28f2df62b9151b'
+  env:
+    PRETTY_JSON_OUTPUT: 'true'
   args:
     - git
     - 'file://${{ inputs.path }}'
