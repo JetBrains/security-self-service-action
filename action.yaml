@@ -19,7 +19,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:b08aa90616e435442843efc173c323337a6efaa31e69384c8b7a8c1fd309fbab'
+  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:65a5ee7ac59b29075c7223f3c419e8ce04ba85737c255583d2a1c108e97f1ee7'
   args:
     - git
     - 'file://${{ inputs.path }}'
