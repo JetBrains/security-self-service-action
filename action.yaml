@@ -12,6 +12,10 @@ inputs:
   branch:
     description: 'Branch to scan. Pass the ref name from the calling workflow (github.ref_name).'
     required: true
+  only-verified:
+    description: 'If true, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. Defaults to false, which reports verified, unverified, and unknown results.'
+    required: false
+    default: 'false'
 
 runs:
   using: 'docker'
@@ -22,3 +26,5 @@ runs:
     - '--since-commit=${{ inputs.since-commit }}'
     - '--branch=${{ inputs.branch }}'
     - '--fail'
+    - '--github-actions'
+    - "--results=${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}"
