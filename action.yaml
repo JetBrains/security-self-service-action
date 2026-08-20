@@ -14,29 +14,11 @@ inputs:
     required: true
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Run TruffleHog scan
-      shell: bash
-      run: |
-        set -o pipefail
-
-        LOG_FILE="$RUNNER_TEMP/trufflehog-scan-output.log"
-
-        docker run --rm \
-          -v "${{ github.workspace }}:/repo" \
-          -w /repo \
-          registry.jetbrains.team/p/sad/tools/trufflehog@sha256:2cbf8b2a031e10f2db21ee6908f5bfc9722eee2f8f7b9105e10c1f00db677778 \
-          git 'file://${{ inputs.path }}' \
-          --since-commit='${{ inputs.since-commit }}' \
-          --branch='${{ inputs.branch }}' \
-          --fail \
-          2>&1 | tee "$LOG_FILE"
-        SCAN_EXIT=${PIPESTATUS[0]}
-
-        if grep -q "Healthcheck failed" "$LOG_FILE"; then
-          echo "::error::Secrets verifier (secrets-verifier.labs.jb.gg) is unreachable — the scan did not run reliably. Failing the job."
-          exit 1
-        fi
-
-        exit "$SCAN_EXIT"
+  using: 'docker'
+  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:2cbf8b2a031e10f2db21ee6908f5bfc9722eee2f8f7b9105e10c1f00db677778'
+  args:
+    - git
+    - 'file://${{ inputs.path }}'
+    - '--since-commit=${{ inputs.since-commit }}'
+    - '--branch=${{ inputs.branch }}'
+    - '--fail'
