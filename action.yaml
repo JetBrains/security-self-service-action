@@ -26,5 +26,4 @@ runs:
     - '--since-commit=${{ inputs.since-commit }}'
     - '--branch=${{ inputs.branch }}'
     - '--fail'
-    - '--github-actions'
     - "--results=${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}"
