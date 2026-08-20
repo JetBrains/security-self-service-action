@@ -26,7 +26,7 @@ runs:
         docker run --rm \
           -v "${{ github.workspace }}:/repo" \
           -w /repo \
-          registry.jetbrains.team/p/sad/tools/trufflehog@sha256:72bba71ba5e0f2990b2074bb049f4f3a1ae1a77c7386cd535165b780d2a94761 \
+          registry.jetbrains.team/p/sad/tools/trufflehog@sha256:1e4e18f89944c724d8c4528745648347a7bcd840b04272d9d4dbf87a25623a48 \
           git 'file://${{ inputs.path }}' \
           --since-commit='${{ inputs.since-commit }}' \
           --branch='${{ inputs.branch }}' \
