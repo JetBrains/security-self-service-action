@@ -33,5 +33,5 @@ runs:
           --branch='${{ inputs.branch }}' \
           --config=/config/trufflehog-config.yaml \
           --fail \
-          --json \
+          --github-actions \
           --results="${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}"
