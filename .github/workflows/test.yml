@@ -1,7 +1,7 @@
 on: push
 
 jobs:
-  test:
+  test-verified-only:
     runs-on: sre-eqx-kata
     steps:
       - uses: actions/checkout@v4
@@ -11,3 +11,16 @@ jobs:
         with:
           since-commit: ${{ github.event.before }}
           branch: ${{ github.ref_name }}
+          only-verified: 'true'
+
+  test-all-results:
+    runs-on: sre-eqx-kata
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./
+        with:
+          since-commit: ${{ github.event.before }}
+          branch: ${{ github.ref_name }}
+          only-verified: 'false'
