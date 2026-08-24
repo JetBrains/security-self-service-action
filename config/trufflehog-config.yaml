@@ -8,7 +8,7 @@ detectors:
     regex:
       token: '\b(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)\b'
     verify:
-      - endpoint: https://localhost.labs.jb.gg/api/validator
+      - endpoint: https://secrets-verifier.labs.jb.gg/api/validator
 
   - name: HUB_PERMANENT_TOKEN
     description: Detection YouTrack and Hub tokens in perm format
