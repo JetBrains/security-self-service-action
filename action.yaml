@@ -31,11 +31,11 @@ runs:
         FAILED=0
         for origin in $ORIGINS; do
           HEALTH_CHECK_URL="${origin}/actuator/health"
-          echo "Checking verifier health: $HEALTH_CHECK_URL"
+          echo "Checking verifier health:"
           if curl -fsL --max-time 10 "$HEALTH_CHECK_URL" > /dev/null 2>&1; then
             echo "  OK"
           else
-            echo "::error::Secrets verifier is unreachable: $HEALTH_CHECK_URL"
+            echo "::error::Secrets verifier is unreachable"
             FAILED=1
           fi
         done
