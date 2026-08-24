@@ -9,8 +9,6 @@ jobs:
           fetch-depth: 0
       - uses: ./
         with:
-          since-commit: ${{ github.event.before }}
-          branch: ${{ github.ref_name }}
           only-verified: 'true'
 
   test-all-results:
@@ -21,6 +19,4 @@ jobs:
           fetch-depth: 0
       - uses: ./
         with:
-          since-commit: ${{ github.event.before }}
-          branch: ${{ github.ref_name }}
           only-verified: 'false'

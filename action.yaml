@@ -7,11 +7,13 @@ inputs:
     required: false
     default: '.'
   since-commit:
-    description: 'Commit SHA to scan from, exclusive. Pass the previous commit SHA from the calling workflow (github.event.before for push events).'
-    required: true
+    description: 'Commit SHA to scan from, exclusive. Defaults to github.event.before (only correct for push events); leave unset to use the default, or override for other trigger types.'
+    required: false
+    default: ''
   branch:
-    description: 'Branch to scan. Pass the ref name from the calling workflow (github.ref_name).'
-    required: true
+    description: 'Branch to scan. Defaults to github.ref_name; leave unset to use the default, or override for other trigger types.'
+    required: false
+    default: ''
   only-verified:
     description: 'If true, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. Defaults to false, which reports verified, unverified, and unknown results.'
     required: false
@@ -45,17 +47,46 @@ runs:
           exit 1
         fi
 
+    - name: Resolve scan range
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        SINCE_COMMIT='${{ inputs.since-commit }}'
+        BRANCH='${{ inputs.branch }}'
+        NULL_SHA='0000000000000000000000000000000000000000'
+
+        if [ -z "$BRANCH" ]; then
+          BRANCH='${{ github.ref_name }}'
+        fi
+
+        if [ -z "$SINCE_COMMIT" ]; then
+          SINCE_COMMIT='${{ github.event.before }}'
+        fi
+
+        if [ -z "$SINCE_COMMIT" ] || [ "$SINCE_COMMIT" == "$NULL_SHA" ]; then
+          echo "No usable since-commit (first push to branch, or non-push trigger) — scanning full history instead of a diff."
+          SINCE_COMMIT=''
+        fi
+
+        echo "SINCE_COMMIT=$SINCE_COMMIT" >> "$GITHUB_ENV"
+        echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
     - name: Run TruffleHog scan
       shell: bash
       run: |
+        DIFF_ARGS=()
+        if [ -n "$SINCE_COMMIT" ]; then
+          DIFF_ARGS=(--since-commit="$SINCE_COMMIT" --branch="$BRANCH")
+        fi
+
         docker run --rm \
           -v "${{ github.workspace }}:/repo" \
           -v "${{ github.action_path }}/config/trufflehog-config.yaml:/config/trufflehog-config.yaml:ro" \
           -w /repo \
           trufflesecurity/trufflehog@sha256:ff4c95e9df7d645daf2140e3ca1039031c63106268d5fbb25feb43ceca1bcc33 \
           git 'file://${{ inputs.path }}' \
-          --since-commit='${{ inputs.since-commit }}' \
-          --branch='${{ inputs.branch }}' \
+          "${DIFF_ARGS[@]}" \
           --config=/config/trufflehog-config.yaml \
           --fail \
           --github-actions \
