@@ -19,14 +19,13 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://registry.jetbrains.team/p/sad/tools/trufflehog@sha256:6112d8e49e53ebc950f17f29f8581262632788b30c3df9606a28f2df62b9151b'
-  env:
-    PRETTY_JSON_OUTPUT: 'true'
+  image: 'docker://trufflesecurity/trufflehog@sha256:ff4c95e9df7d645daf2140e3ca1039031c63106268d5fbb25feb43ceca1bcc33'
   args:
     - git
     - 'file://${{ inputs.path }}'
     - '--since-commit=${{ inputs.since-commit }}'
     - '--branch=${{ inputs.branch }}'
+    - '--config=${{ github.action_path }}/config/trufflehog-config.yaml'
     - '--fail'
     - '--json'
     - "--results=${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}"
