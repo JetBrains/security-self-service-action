@@ -18,6 +18,10 @@ inputs:
     description: 'If true, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. Defaults to false, which reports verified, unverified, and unknown results.'
     required: false
     default: 'false'
+  extra-args:
+    description: 'Additional space-separated arguments to pass to the TruffleHog CLI, appended after the default flags (e.g. "--exclude-paths=path/to/file").'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -94,6 +98,11 @@ runs:
           DIFF_ARGS=(--since-commit="$SINCE_COMMIT" --branch="$BRANCH")
         fi
 
+        EXTRA_ARGS=()
+        if [ -n "${{ inputs.extra-args }}" ]; then
+          read -ra EXTRA_ARGS <<< "${{ inputs.extra-args }}"
+        fi
+
         docker run --rm \
           -v "${{ github.workspace }}:/repo" \
           -v "${CONFIG_FILE}:/config/trufflehog-config.yaml:ro" \
@@ -104,4 +113,5 @@ runs:
           --config=/config/trufflehog-config.yaml \
           --fail \
           --github-actions \
-          --results="${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}"
+          --results="${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}" \
+          "${EXTRA_ARGS[@]}"
