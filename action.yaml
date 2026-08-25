@@ -48,33 +48,24 @@ runs:
 
         SINCE_COMMIT='${{ inputs.since-commit }}'
         BRANCH='${{ inputs.branch }}'
-        NULL_SHA='0000000000000000000000000000000000000000'
         DEFAULT_BRANCH='${{ github.event.repository.default_branch }}'
 
         if [ -z "$BRANCH" ]; then
           BRANCH='${{ github.ref_name }}'
         fi
 
-        if [ -z "$SINCE_COMMIT" ]; then
-          SINCE_COMMIT='${{ github.event.before }}'
+        if [ -z "$SINCE_COMMIT" ] && [ -n "$DEFAULT_BRANCH" ] && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+          echo "No explicit since-commit — defaulting to merge-base with '$DEFAULT_BRANCH' to scan all commits on this branch."
+          git fetch --quiet origin "$DEFAULT_BRANCH" 2>/dev/null || true
+          MERGE_BASE="$(git merge-base "origin/$DEFAULT_BRANCH" HEAD 2>/dev/null || true)"
+          if [ -n "$MERGE_BASE" ]; then
+            SINCE_COMMIT="$MERGE_BASE"
+            echo "Resolved merge-base with '$DEFAULT_BRANCH': $SINCE_COMMIT"
+          fi
         fi
 
-        if [ -z "$SINCE_COMMIT" ] || [ "$SINCE_COMMIT" == "$NULL_SHA" ]; then
-          SINCE_COMMIT=''
-
-          if [ -n "$DEFAULT_BRANCH" ] && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
-            echo "No usable since-commit (first push to branch, or non-push trigger) — trying merge-base with '$DEFAULT_BRANCH'."
-            git fetch --quiet origin "$DEFAULT_BRANCH" 2>/dev/null || true
-            MERGE_BASE="$(git merge-base "origin/$DEFAULT_BRANCH" HEAD 2>/dev/null || true)"
-            if [ -n "$MERGE_BASE" ]; then
-              SINCE_COMMIT="$MERGE_BASE"
-              echo "Resolved merge-base with '$DEFAULT_BRANCH': $SINCE_COMMIT"
-            fi
-          fi
-
-          if [ -z "$SINCE_COMMIT" ]; then
-            echo "No usable since-commit and no merge-base available — scanning full history instead of a diff."
-          fi
+        if [ -z "$SINCE_COMMIT" ]; then
+          echo "No usable since-commit and no merge-base available — scanning full history instead of a diff."
         fi
 
         echo "SINCE_COMMIT=$SINCE_COMMIT" >> "$GITHUB_ENV"
