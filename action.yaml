@@ -27,7 +27,7 @@ runs:
       run: |
         set -euo pipefail
 
-        CONFIG_URL='https://secrets-verifier.jb.gg/trufflehog.yml'
+        CONFIG_URL='https://secrets-verifier.labs.jb.gg/trufflehog.yml'
         CONFIG_FILE="${RUNNER_TEMP}/trufflehog-config.yaml"
 
         if ! curl -fsSL --max-time 10 "$CONFIG_URL" -o "$CONFIG_FILE"; then
