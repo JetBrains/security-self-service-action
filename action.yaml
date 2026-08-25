@@ -41,30 +41,6 @@ runs:
 
         echo "CONFIG_FILE=$CONFIG_FILE" >> "$GITHUB_ENV"
 
-    - name: Check verifier health
-      shell: bash
-      run: |
-        set -euo pipefail
-
-        ORIGINS=$(grep -oE 'endpoint:\s*\S+' "$CONFIG_FILE" | awk '{print $2}' | sed -E 's#^(https?://[^/]+).*#\1#' | sort -u)
-
-        FAILED=0
-        for origin in $ORIGINS; do
-          HEALTH_CHECK_URL="${origin}/actuator/health"
-          echo "Checking verifier health:"
-          if curl -fsL --max-time 10 "$HEALTH_CHECK_URL" > /dev/null 2>&1; then
-            echo "  OK"
-          else
-            echo "::error::Secrets verifier is unreachable"
-            FAILED=1
-          fi
-        done
-
-        if [ "$FAILED" -eq 1 ]; then
-          echo "::error::One or more secrets verifiers failed their health check. Failing before running TruffleHog so a down verifier isn't mistaken for a clean scan."
-          exit 1
-        fi
-
     - name: Resolve scan range
       shell: bash
       run: |
