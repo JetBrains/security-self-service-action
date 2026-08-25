@@ -1,7 +1,8 @@
 # Security Self-Service Secret Scan
 
 Scans a repository for secrets using TruffleHog with a JetBrains-specific
-detector config.
+detector config. It scans all of the commits on current feature branch, on the default branch 
+it performs a full scan
 
 ## Config
 
@@ -14,16 +15,18 @@ with stale/no detectors.
 
 `runs-on: sre-eqx-kata` and `fetch-depth: 0` are both required — the
 runner needs network access to the internal config endpoint (and, during
-verification, the detector validator endpoints), and TruffleHog needs
-full git history to resolve `since-commit` (a shallow checkout will fail
-with `unable to resolve commit: object not found`).
+verification, the detector validator endpoints), and the action needs
+full git history (including the default branch) to resolve `since-commit`
+via merge-base or an explicit override; a shallow checkout will fail with
+`unable to resolve commit: object not found` or silently fall back to a
+full-history scan.
 
 ## Inputs
 
 | Input | Default | Description |
 |---|---|---|
 | `path` | `.` | Path to scan, relative to the checked-out repository. Passed to TruffleHog as its `git` source (`file://<path>`). |
-| `since-commit` | `` (falls back to `github.event.before`) | Commit SHA to scan from, exclusive. On a `push` event this defaults to the commit the branch pointed to before the push, so only the newly pushed commits are scanned. On the first push to a branch, or on non-`push` triggers, `github.event.before` isn't usable and the action falls back to scanning full history. Override to scan an explicit range. |
+| `since-commit` | `` (falls back to merge-base with the default branch) | Commit SHA to scan from, exclusive. By default (no explicit value), the action scans every commit on the current branch since it diverged from the repo's default branch — computed via `git merge-base <default-branch> HEAD` — regardless of how many pushes came before. On the default branch itself, or if merge-base can't be resolved (e.g. a shallow checkout missing the required history), it falls back to scanning full history instead. Override to scan an explicit range. |
 | `branch` | `` (falls back to `github.ref_name`) | Branch to scan. Defaults to the current ref; override for non-`push` triggers or to scan a different branch than the one checked out. |
 | `only-verified` | `'false'` | If `'true'`, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. `'false'` (default) reports verified, unverified, and unknown results — noisier, but nothing is silently dropped. |
 | `extra-args` | `''` | Additional space-separated arguments appended after the action's default TruffleHog flags (e.g. `--exclude-paths=path/to/file`). Use this for anything the action doesn't expose as a first-class input. |

@@ -74,9 +74,9 @@ runs:
     - name: Run TruffleHog scan
       shell: bash
       run: |
-        DIFF_ARGS=()
+        DIFF_ARGS=(--branch="$BRANCH")
         if [ -n "$SINCE_COMMIT" ]; then
-          DIFF_ARGS=(--since-commit="$SINCE_COMMIT" --branch="$BRANCH")
+          DIFF_ARGS+=(--since-commit="$SINCE_COMMIT")
         fi
 
         EXTRA_ARGS=()
