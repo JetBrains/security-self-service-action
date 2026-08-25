@@ -22,12 +22,26 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Fetch TruffleHog config
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        CONFIG_URL='https://secrets-verifier.labs.jb.gg/trufflehog.yml'
+        CONFIG_FILE="${RUNNER_TEMP}/trufflehog-config.yaml"
+
+        if ! curl -fsSL --max-time 10 "$CONFIG_URL" -o "$CONFIG_FILE"; then
+          echo "::error::Failed to fetch TruffleHog config from ${CONFIG_URL}"
+          exit 1
+        fi
+
+        echo "CONFIG_FILE=$CONFIG_FILE" >> "$GITHUB_ENV"
+
     - name: Check verifier health
       shell: bash
       run: |
         set -euo pipefail
 
-        CONFIG_FILE="${{ github.action_path }}/config/trufflehog-config.yaml"
         ORIGINS=$(grep -oE 'endpoint:\s*\S+' "$CONFIG_FILE" | awk '{print $2}' | sed -E 's#^(https?://[^/]+).*#\1#' | sort -u)
 
         FAILED=0
@@ -82,7 +96,7 @@ runs:
 
         docker run --rm \
           -v "${{ github.workspace }}:/repo" \
-          -v "${{ github.action_path }}/config/trufflehog-config.yaml:/config/trufflehog-config.yaml:ro" \
+          -v "${CONFIG_FILE}:/config/trufflehog-config.yaml:ro" \
           -w /repo \
           trufflesecurity/trufflehog@sha256:ff4c95e9df7d645daf2140e3ca1039031c63106268d5fbb25feb43ceca1bcc33 \
           git 'file://${{ inputs.path }}' \
