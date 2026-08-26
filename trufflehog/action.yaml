@@ -15,9 +15,9 @@ inputs:
     required: false
     default: ''
   only-verified:
-    description: 'If true, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. Defaults to false, which reports verified, unverified, and unknown results.'
+    description: 'If true, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. Defaults to true; set to false to also report unverified and unknown results.'
     required: false
-    default: 'false'
+    default: 'true'
   extra-args:
     description: 'Additional space-separated arguments to pass to the TruffleHog CLI, appended after the default flags (e.g. "--exclude-paths=path/to/file").'
     required: false
