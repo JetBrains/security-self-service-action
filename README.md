@@ -52,8 +52,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: JetBrains/security-self-service-action/trufflehog@v5
-        with:
-          only-verified: 'true'
 ```
 
 ### Full scan (verified, unverified, and unknown)
