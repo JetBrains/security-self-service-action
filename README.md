@@ -2,7 +2,7 @@
 
 This repository hosts self-service security GitHub Actions for JetBrains teams. It will grow to include more than one action over time — each one lives in its own subfolder with its own README section below.
 
-## trufflehog
+## Trufflehog action
 
 The action lives in [`trufflehog/`](./trufflehog/action.yaml) and is referenced as `JetBrains/security-self-service-action/trufflehog@main`. It scans a repository for secrets using TruffleHog with a JetBrains-specific detector config. It scans all of the commits on the current feature branch; on the default branch it performs a full scan instead.
 
