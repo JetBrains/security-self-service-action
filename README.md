@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: JetBrains/security-self-service-action/trufflehog@v4
+      - uses: JetBrains/security-self-service-action/trufflehog@v5
         with:
           only-verified: 'true'
 ```
@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: JetBrains/security-self-service-action/trufflehog@v4
+      - uses: JetBrains/security-self-service-action/trufflehog@v5
         with:
           only-verified: 'false'
 ```
@@ -94,7 +94,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: JetBrains/security-self-service-action/trufflehog@v4
+      - uses: JetBrains/security-self-service-action/trufflehog@v5
         with:
           path: './services/api'
           extra-args: '--exclude-paths=.github/trufflehog-exclude.txt'
