@@ -1,0 +1,98 @@
+name: 'Security Self-Service Secret Scan'
+description: 'Scans a repository for secrets using TruffleHog with a custom detector config.'
+
+inputs:
+  path:
+    description: 'Path to scan, relative to the checked-out repository.'
+    required: false
+    default: '.'
+  since-commit:
+    description: 'Commit SHA to scan from, exclusive. Defaults to github.event.before (only correct for push events); leave unset to use the default, or override for other trigger types.'
+    required: false
+    default: ''
+  branch:
+    description: 'Branch to scan. Defaults to github.ref_name; leave unset to use the default, or override for other trigger types.'
+    required: false
+    default: ''
+  only-verified:
+    description: 'If true, only report/fail on secrets verified as currently live (confirmed via API check), suppressing unverified and unknown matches. Defaults to true; set to false to also report unverified and unknown results.'
+    required: false
+    default: 'true'
+  extra-args:
+    description: 'Additional space-separated arguments to pass to the TruffleHog CLI, appended after the default flags (e.g. "--exclude-paths=path/to/file").'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Fetch TruffleHog config
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        CONFIG_URL='https://secrets-verifier.labs.jb.gg/trufflehog.yml'
+        CONFIG_FILE="${RUNNER_TEMP}/trufflehog-config.yaml"
+
+        if ! curl -fsSL --max-time 10 "$CONFIG_URL" -o "$CONFIG_FILE"; then
+          echo "::error::Failed to fetch TruffleHog config from ${CONFIG_URL}"
+          exit 1
+        fi
+
+        echo "CONFIG_FILE=$CONFIG_FILE" >> "$GITHUB_ENV"
+
+    - name: Resolve scan range
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        SINCE_COMMIT='${{ inputs.since-commit }}'
+        BRANCH='${{ inputs.branch }}'
+        DEFAULT_BRANCH='${{ github.event.repository.default_branch }}'
+
+        if [ -z "$BRANCH" ]; then
+          BRANCH='${{ github.ref_name }}'
+        fi
+
+        if [ -z "$SINCE_COMMIT" ] && [ -n "$DEFAULT_BRANCH" ] && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+          echo "No explicit since-commit — defaulting to merge-base with '$DEFAULT_BRANCH' to scan all commits on this branch."
+          git fetch --quiet origin "$DEFAULT_BRANCH" 2>/dev/null || true
+          MERGE_BASE="$(git merge-base "origin/$DEFAULT_BRANCH" HEAD 2>/dev/null || true)"
+          if [ -n "$MERGE_BASE" ]; then
+            SINCE_COMMIT="$MERGE_BASE"
+            echo "Resolved merge-base with '$DEFAULT_BRANCH': $SINCE_COMMIT"
+          fi
+        fi
+
+        if [ -z "$SINCE_COMMIT" ]; then
+          echo "No usable since-commit and no merge-base available — scanning full history instead of a diff."
+        fi
+
+        echo "SINCE_COMMIT=$SINCE_COMMIT" >> "$GITHUB_ENV"
+        echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+    - name: Run TruffleHog scan
+      shell: bash
+      run: |
+        DIFF_ARGS=(--branch="$BRANCH")
+        if [ -n "$SINCE_COMMIT" ]; then
+          DIFF_ARGS+=(--since-commit="$SINCE_COMMIT")
+        fi
+
+        EXTRA_ARGS=()
+        if [ -n "${{ inputs.extra-args }}" ]; then
+          read -ra EXTRA_ARGS <<< "${{ inputs.extra-args }}"
+        fi
+
+        docker run --rm \
+          -v "${{ github.workspace }}:/repo" \
+          -v "${CONFIG_FILE}:/config/trufflehog-config.yaml:ro" \
+          -w /repo \
+          trufflesecurity/trufflehog@sha256:ff4c95e9df7d645daf2140e3ca1039031c63106268d5fbb25feb43ceca1bcc33 \
+          git 'file://${{ inputs.path }}' \
+          "${DIFF_ARGS[@]}" \
+          --config=/config/trufflehog-config.yaml \
+          --fail \
+          --github-actions \
+          --results="${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}" \
+          "${EXTRA_ARGS[@]}"
