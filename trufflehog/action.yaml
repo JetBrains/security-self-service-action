@@ -41,17 +41,25 @@ runs:
 
         echo "CONFIG_FILE=$CONFIG_FILE" >> "$GITHUB_ENV"
 
-    - name: Resolve scan range
+    - name: Resolve scan range and run TruffleHog
       shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_SINCE_COMMIT: ${{ inputs.since-commit }}
+        INPUT_BRANCH: ${{ inputs.branch }}
+        INPUT_ONLY_VERIFIED: ${{ inputs.only-verified }}
+        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        REF_NAME: ${{ github.ref_name }}
       run: |
         set -euo pipefail
 
-        SINCE_COMMIT='${{ inputs.since-commit }}'
-        BRANCH='${{ inputs.branch }}'
-        DEFAULT_BRANCH='${{ github.event.repository.default_branch }}'
+        BRANCH="${INPUT_BRANCH:-$REF_NAME}"
+        SINCE_COMMIT="$INPUT_SINCE_COMMIT"
 
         if [ -z "$BRANCH" ]; then
-          BRANCH='${{ github.ref_name }}'
+          echo "::error::Unable to resolve branch"
+          exit 1
         fi
 
         if [ -z "$SINCE_COMMIT" ] && [ -n "$DEFAULT_BRANCH" ] && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
@@ -68,31 +76,34 @@ runs:
           echo "No usable since-commit and no merge-base available — scanning full history instead of a diff."
         fi
 
-        echo "SINCE_COMMIT=$SINCE_COMMIT" >> "$GITHUB_ENV"
-        echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+        case "$INPUT_ONLY_VERIFIED" in
+          true) RESULTS='verified' ;;
+          false) RESULTS='verified,unverified,unknown' ;;
+          *)
+            echo "::error::only-verified must be 'true' or 'false'"
+            exit 1
+            ;;
+        esac
 
-    - name: Run TruffleHog scan
-      shell: bash
-      run: |
         DIFF_ARGS=(--branch="$BRANCH")
         if [ -n "$SINCE_COMMIT" ]; then
           DIFF_ARGS+=(--since-commit="$SINCE_COMMIT")
         fi
 
         EXTRA_ARGS=()
-        if [ -n "${{ inputs.extra-args }}" ]; then
-          read -ra EXTRA_ARGS <<< "${{ inputs.extra-args }}"
+        if [ -n "$INPUT_EXTRA_ARGS" ]; then
+          read -r -a EXTRA_ARGS <<< "$INPUT_EXTRA_ARGS"
         fi
 
         docker run --rm \
-          -v "${{ github.workspace }}:/repo" \
+          -v "${GITHUB_WORKSPACE}:/repo:ro" \
           -v "${CONFIG_FILE}:/config/trufflehog-config.yaml:ro" \
           -w /repo \
           trufflesecurity/trufflehog@sha256:ff4c95e9df7d645daf2140e3ca1039031c63106268d5fbb25feb43ceca1bcc33 \
-          git 'file://${{ inputs.path }}' \
+          git "file://${INPUT_PATH}" \
           "${DIFF_ARGS[@]}" \
           --config=/config/trufflehog-config.yaml \
           --fail \
           --github-actions \
-          --results="${{ inputs.only-verified == 'true' && 'verified' || 'verified,unverified,unknown' }}" \
+          --results="$RESULTS" \
           "${EXTRA_ARGS[@]}"
