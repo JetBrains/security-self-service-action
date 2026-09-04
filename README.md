@@ -2,9 +2,6 @@
 
 This repository hosts self-service security GitHub Actions for JetBrains teams. It will grow to include more than one action over time — each one lives in its own subfolder with its own README section below.
 
-## Warning
-
-As long as this repository is private, only other private repositories are able to use github action from here. This policy is connected to github's own configuration, so unfortunately we can not really change it.
 
 ## Trufflehog action
 
@@ -12,7 +9,7 @@ The action lives in [`trufflehog/`](./trufflehog/action.yaml) and is referenced 
 
 ### Usage
 
-`runs-on: sre-eqx-kata` and `fetch-depth: 0` are both required — the runner needs network access to the internal config endpoint (and, during verification, the detector validator endpoints), and the action needs full git history (including the default branch) to resolve `since-commit` via merge-base or an explicit override; a shallow checkout will fail with `unable to resolve commit: object not found` or silently fall back to a full-history scan.
+`runs-on: sre-eqx-kata` and `fetch-depth: 0` are both required — the runner needs network access to the internal config endpoint (and, during verification, the detector validator endpoints), and the action needs full git history (including the default branch) to resolve `since-commit` via merge-base or an explicit override; a shallow checkout will fail with `unable to resolve commit: object not found` or silently fall back to a full-history scan. The runner works only for private and internal repositories.
 
 ### Default trufflehog action (verified-only)
 
